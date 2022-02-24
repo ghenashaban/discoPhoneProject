@@ -5,35 +5,33 @@ import scala.collection.immutable.HashMap
 
 class PhoneProjectTest extends AnyFlatSpec {
 
-  "Simplified call logs" should "return a list of Call" in {
+  val customerAfirstCall = Call(CustomersId("A"), PhoneNumberCalled("555-333-212"), CallDuration("00:02:03"))
+  val customerAsecondCall = Call(CustomersId("A"), PhoneNumberCalled("555-433-242"), CallDuration("00:06:41"))
+  val customerBfirstCall = Call(CustomersId("B"), PhoneNumberCalled("555-333-212"), CallDuration("00:01:20"))
+
+
+  "Call log" should "return a list of Calls" in {
     val actualResult = dataProcess("simple-calls.log")
-    val expectedResult = Right(List(
-      Call(CustomersId("A"), PhoneNumberCalled("555-333-212"), CallDuration("00:02:03")),
-      Call(CustomersId("A"), PhoneNumberCalled("555-433-242"), CallDuration("00:06:41")),
-      Call(CustomersId("B"), PhoneNumberCalled("555-333-212"), CallDuration("00:01:20"))))
+    val expectedResult = Right(List(customerAfirstCall, customerAsecondCall, customerBfirstCall))
     assertResult(expectedResult)(actualResult)
   }
 
-  "Call logs parsed correctly where a string of call" should "return a Call case class" in {
+  "Call logs parsed correctly where a string of call" should "return a Call" in {
     val stringCallLog = "A 555-333-212 00:02:03"
     val actualResult = parseCall(stringCallLog)
-    val expectedResult = Right(Call(CustomersId("A"), PhoneNumberCalled("555-333-212"), CallDuration("00:02:03")))
+    val expectedResult = Right(customerAfirstCall)
     assertResult(expectedResult)(actualResult)
   }
 
-  "calls grouped by customerId" should "???" in {
-    val actualResult = callDurationsGroupedByCustomerId(Right(List(
-      Call(CustomersId("A"), PhoneNumberCalled("555-333-212"), CallDuration("00:02:03")),
-      Call(CustomersId("A"), PhoneNumberCalled("555-433-242"), CallDuration("00:06:41")),
-      Call(CustomersId("B"), PhoneNumberCalled("555-333-212"), CallDuration("00:01:20"))))
-    )
+  "List of Calls" should "return Customer grouped by call duration" in {
+    val actualResult = callDurationsGroupedByCustomerId(Right(List(customerAfirstCall, customerAsecondCall, customerBfirstCall)))
     val expectedResult = Right(HashMap(
       CustomersId("A") -> List(LocalTime.parse("00:02:03"), LocalTime.parse("00:06:41")),
       CustomersId("B") -> List(LocalTime.parse("00:01:20"))))
     assertResult(expectedResult)(actualResult)
   }
 
-  "Filter out the call with longest Duration" should "return a list of filtered call durations in seconds" in {
+  "Customer with a list of call durations" should "return a list of filtered call durations in seconds" in {
     val actualResult = filterCallsForPromotion(Map(CustomersId("A") ->
       List(LocalTime.parse("00:02:03"),
         LocalTime.parse("00:06:41"),
@@ -43,7 +41,7 @@ class PhoneProjectTest extends AnyFlatSpec {
   }
 
   "Given a list of durations in seconds per customer" should "return total costs per customer after filter applied" in {
-    val listOfCallDurationinSecondsFiltered: List[List[CallDurationInSeconds]] = List(List(CallDurationInSeconds(123)), List(CallDurationInSeconds(80)))
+    val listOfCallDurationinSecondsFiltered = List(List(CallDurationInSeconds(123)), List(CallDurationInSeconds(80)))
     val actualResult = listOfCallCostsPerCustomer(listOfCallDurationinSecondsFiltered, List())
     val expectedResult: List[Cost] = List(Cost(3.69), Cost(2.4))
     assertResult(expectedResult)(actualResult)
@@ -63,7 +61,7 @@ class PhoneProjectTest extends AnyFlatSpec {
     assertResult(expectedResult)(actualResult)
   }
 
-  "Given a customerId with a cost" should "return a string" in {
+  "Given a customerId with total cost" should "return a string" in {
     val actualResult = DataProcess.toString(List(
       (CustomersId("B"), Cost(28.64)))).value
     val expectedResult = "CustomersId(B) has a bill of £28.64"
