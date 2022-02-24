@@ -1,5 +1,4 @@
-import com.phone.DataProcess._
-import com.phone._
+import DataProcess._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class FileTesting extends AnyFlatSpec {

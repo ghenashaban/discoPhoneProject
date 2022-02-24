@@ -42,7 +42,7 @@ object DataProcess extends App {
 
   def filterCallsForPromotion(callMappedById: Map[CustomersId, List[LocalTime]]): List[List[CallDurationInSeconds]] = {
     val localTimeCallDurationList: List[List[LocalTime]] = callMappedById.values.toList
-    val callDurationToSecondsList: List[List[CallDurationInSeconds]] = localTimeCallDurationList.map(value => value.map(value => CallDurationInSeconds(Duration.between(LocalTime.MIN, value).toSeconds)))
+    val callDurationToSecondsList: List[List[CallDurationInSeconds]] = localTimeCallDurationList.map(value => value.map(value => CallDurationInSeconds(Duration.between(LocalTime.MIN, value).getSeconds)))
     val filteredCalls: List[List[Long]] = callDurationToSecondsList.map(value => value.map(value => value.value)).map(value => value.filter(_ != value.max))
     val filteredCallsDurationInSeconds: List[List[CallDurationInSeconds]] = filteredCalls.map(value => value.map(value => CallDurationInSeconds(value)))
     joinCustomerWithCost(callMappedById.keys.toList, listOfCallCostsPerCustomer(filteredCallsDurationInSeconds, List()))
