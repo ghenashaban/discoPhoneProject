@@ -2,7 +2,7 @@ import cats.implicits._
 import scala.io.Source
 import java.time.{Duration, LocalTime}
 
-object DataProcess extends App{
+object DataProcess extends App {
 
   def dataProcess(fileName: String): Either[Error, List[Call]] = {
     Source.getClass.getResource(s"/$fileName") match {
@@ -43,12 +43,10 @@ object DataProcess extends App{
   def filterCallsForPromotion(callMappedById: Map[CustomersId, List[LocalTime]]): List[List[CallDurationInSeconds]] = {
     val localTimeCallDurationList: List[List[LocalTime]] = callMappedById.values.toList
     val callDurationToSecondsList: List[List[CallDurationInSeconds]] = localTimeCallDurationList.map(value => value.map(value => CallDurationInSeconds(Duration.between(LocalTime.MIN, value).toSeconds)))
-    val filteredCalls: List[List[CallDurationInSeconds]] = callDurationToSecondsList.map(value => value.map(value => value.value)).
-
-      val v = filteredCalls.map(value => value.filter(_ != value.max)).map(value => value.map(value => CallDurationInSeconds(value)))
-
-    joinCustomerWithCost(callMappedById.keys.toList, listOfCallCostsPerCustomer(filteredCalls, List()))
-    filteredCalls
+    val filteredCalls: List[List[Long]] = callDurationToSecondsList.map(value => value.map(value => value.value)).map(value => value.filter(_ != value.max))
+    val filteredCallsDurationInSeconds: List[List[CallDurationInSeconds]] = filteredCalls.map(value => value.map(value => CallDurationInSeconds(value)))
+    joinCustomerWithCost(callMappedById.keys.toList, listOfCallCostsPerCustomer(filteredCallsDurationInSeconds, List()))
+    filteredCallsDurationInSeconds
   }
 
   def listOfCallCostsPerCustomer(listOfCallDuration: List[List[CallDurationInSeconds]], listOfCalculatedCost: List[Cost]): List[Cost] = listOfCallDuration match {

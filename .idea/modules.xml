@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/discoPhoneProject.iml" filepath="$PROJECT_DIR$/.idea/modules/discoPhoneProject.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/discoPhoneProject-build.iml" filepath="$PROJECT_DIR$/.idea/modules/discoPhoneProject-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/disco-test-phone-company.iml" filepath="$PROJECT_DIR$/.idea/modules/disco-test-phone-company.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/disco-test-phone-company-build.iml" filepath="$PROJECT_DIR$/.idea/modules/disco-test-phone-company-build.iml" />
     </modules>
   </component>
 </project>
