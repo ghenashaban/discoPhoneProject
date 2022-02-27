@@ -26,7 +26,6 @@ object DataProcess extends App {
     case Left(_) => println("something went wrong")
   }
 
-
   def parseCall(string: String): Either[Error, Call] = {
     val splitLine: List[String] = string.split(" ").map(_.trim).toList
     splitLine match {
@@ -40,20 +39,10 @@ object DataProcess extends App {
     callLogsList match {
       case Right(calls) => {
         val filteredCalls: List[Call] = promotionApplied(calls)
-        val joinCallWithCost: List[(CustomersId, Cost)] = joinCustomerWithCost(filteredCalls, listOfCosts(filteredCalls, List()))
-        val customerGroupedByCosts: Map[CustomersId, List[Cost]] = joinCallWithCost.groupBy(_._1).map {
-          case (key, value) => key -> value.map(value => Cost(value._2.value))
-        }
-        calculateTotalCost(customerGroupedByCosts)
+        val joinCallWithCost: List[(CustomersId, Cost)] = joinCustomerWithTotalCost(filteredCalls, listOfCosts(filteredCalls, List()))
+        joinCallWithCost
       }
     }
-  }
-
-  def calculateTotalCost(customerGroupedByCosts: Map[CustomersId, List[Cost]]): List[(CustomersId, Cost)] = {
-    val customerGroupedByTotalCost: List[(CustomersId, Cost)] = customerGroupedByCosts.toList.map {
-      case (key, value) => key -> Cost(Math.round(value.map(_.value).sum / 0.01)*0.01)
-    }
-    customerGroupedByTotalCost
   }
 
   def promotionApplied(list: List[Call]): List[Call] = {
@@ -78,11 +67,20 @@ object DataProcess extends App {
 
   }
 
-  def joinCustomerWithCost(filteredCalls: List[Call], listOfCallCostPerCustomer: List[Cost]): List[(CustomersId, Cost)] = {
-    val customerIdJoinedWithCost = filteredCalls.map(_.customersId) zip listOfCallCostPerCustomer
-    customerIdJoinedWithCost
+  def calculateTotalCost(customerGroupedByCosts: Map[CustomersId, List[Cost]]): List[(CustomersId, Cost)] = {
+    val customerGroupedByTotalCost: List[(CustomersId, Cost)] = customerGroupedByCosts.toList.map {
+      case (key, value) => key -> Cost(Math.round(value.map(_.value).sum / 0.01) * 0.01)
+    }
+    customerGroupedByTotalCost
   }
 
+  def joinCustomerWithTotalCost(filteredCalls: List[Call], listOfCallCostPerCustomer: List[Cost]): List[(CustomersId, Cost)] = {
+    val customerIdJoinedWithCost = filteredCalls.map(_.customersId) zip listOfCallCostPerCustomer
+    val customerGroupedByCosts: Map[CustomersId, List[Cost]] = customerIdJoinedWithCost.groupBy(_._1).map {
+      case (key, value) => key -> value.map(value => Cost(value._2.value))
+    }
+    calculateTotalCost(customerGroupedByCosts)
+  }
 
   def toTalk(listOfCustomerWithCost: List[(CustomersId, Cost)], talks: List[Talk] = List()): List[Talk] = listOfCustomerWithCost match {
     case a :: aq => {
