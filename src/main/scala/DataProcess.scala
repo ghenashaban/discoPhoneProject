@@ -5,12 +5,13 @@ import java.time.{Duration, LocalTime}
 object DataProcess extends App {
 
   def dataProcess(fileName: String): Either[Error, List[Call]] = {
-    Source.getClass.getResource(s"/$fileName") match {
+   Source.getClass.getResource(s"/$fileName") match {
       case null => Left(Error("file not found"))
       case _ if Source.fromResource(fileName).nonEmpty => {
         val callLogsToList: List[String] = Source.fromResource(fileName).mkString.split("\\n").map(_.trim).toList
         val parseCalls: Either[Error, List[Call]] = callLogsToList.map(parseCall).sequence
         printOutput(parseCalls)
+        Source.fromResource(fileName).close()
         parseCalls
       }
       case _ => Left(Error("Empty File"))
