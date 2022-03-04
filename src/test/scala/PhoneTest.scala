@@ -14,6 +14,13 @@ class PhoneProjectTest extends AnyFlatSpec {
     assertResult(expectedResult)(actualResult)
   }
 
+  //Could test the negative case here too!
+  "Call log" should "throws an error if data does not consist of Calls" in {
+    assertThrows[ArrayIndexOutOfBoundsException] {
+      processCallLog("missing-data.log")
+    }
+  }
+
   "Call logs parsed correctly where a string of call" should "return a Call item" in {
     val stringCallLog = "A 555-333-212 00:02:03"
     val actualResult = parseCall(stringCallLog)
