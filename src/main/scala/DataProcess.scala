@@ -34,6 +34,7 @@ object DataProcess extends App {
     }
   }
 
+  //here is an example of what I mean
   def processCallLog(fileName: String): List[Talk] = {
     val src = Source.fromResource(fileName)
     val callLogsToList = Try(src.getLines) match {
@@ -62,6 +63,7 @@ object DataProcess extends App {
     case Left(_) => println("something went wrong")
   }
 
+  //here is an example of what I mean
   def printOutput2(parsedCalls: List[Call]): List[Talk] = {
     val groupByCost = customerIdGroupedByTotalCost2(parsedCalls)
     val talkPrice = toTalk(groupByCost)
@@ -71,6 +73,7 @@ object DataProcess extends App {
 
   ///////////////////- parseCall -////////////////////
   //This works well
+  //If you used an array here you could split the call by the index
   def parseCall(string: String): Either[Error, Call] = {
     val splitLine: List[String] = string.split(" ").map(_.trim).toList
     splitLine match {
@@ -80,7 +83,7 @@ object DataProcess extends App {
     }
   }
 
-  //If you used an array here you could split the call by the index
+  //here is an example of what I mean
   def parseCall2(call: String): Call = {
     val callArray: Array[String] = call.split(" ").map(_.trim)
 
@@ -104,9 +107,10 @@ object DataProcess extends App {
     }
   }
 
+  //here is an example of what I mean
 def customerIdGroupedByTotalCost2(callLogsList:List[Call]): List[(CustomersId, Cost)] = {
       val filteredCalls: List[Call] = promotionApplied(callLogsList)
-      val joinCallWithCost: List[(CustomersId, Cost)] = joinCustomerWithTotalCost2(filteredCalls)
+      val joinCallWithCost: List[(CustomersId, Cost)] = joinCustomerWithTotalCost2(filteredCalls) //yet to create joinCustomerWithTotalCost2
       joinCallWithCost
 }
 
