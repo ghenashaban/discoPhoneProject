@@ -5,7 +5,7 @@ import java.time.{Duration, LocalTime}
 object DataProcess extends App {
 
   def dataProcess(fileName: String): Either[Error, List[Call]] = {
-   Source.getClass.getResource(s"/$fileName") match {
+    Source.getClass.getResource(s"/$fileName") match {
       case null => Left(Error("file not found"))
       case _ if Source.fromResource(fileName).nonEmpty => {
         val callLogsToList: List[String] = Source.fromResource(fileName).mkString.split("\\n").map(_.trim).toList
@@ -20,9 +20,9 @@ object DataProcess extends App {
 
   def printOutput(parseCalls: Either[Error, List[Call]]) = parseCalls match {
     case Right(_) =>
-      val talk: List[Talk] = toTalk(customerIdGroupedByTotalCost(parseCalls))
-      for (element <- talk) {
-        println(element.value)
+      val talkee = heeey(bla(parseCalls))
+      for (element <- talkee) {
+        println(element)
       }
     case Left(_) => println("something went wrong")
   }
@@ -36,60 +36,52 @@ object DataProcess extends App {
     }
   }
 
-  def customerIdGroupedByTotalCost(callLogsList: Either[Error, List[Call]]): List[(CustomersId, Cost)] = {
+  def bla(callLogsList: Either[Error, List[Call]]): Either[Error, Map[CustomersId, Cost]] = {
     callLogsList match {
-      case Right(calls) => {
-        val filteredCalls: List[Call] = promotionApplied(calls)
-        val joinCallWithCost: List[(CustomersId, Cost)] = joinCustomerWithTotalCost(filteredCalls, listOfCosts(filteredCalls, List()))
-        joinCallWithCost
-      }
+      case Right(calls) => Right(promotionApplied(calls))
     }
   }
 
-  def promotionApplied(list: List[Call]): List[Call] = {
-    val longDuration = list.map(value => value.callDuration.value).max
-    val filteredCalls = list.filter(_.callDuration.value != longDuration)
-    filteredCalls
-  }
-
-  def listOfCosts(listOfCalls: List[Call], listOfCalculatedCost: List[Cost]): List[Cost] = listOfCalls match {
-    case a :: aq => {
-      val callCost: Cost = calculateCost(a)
-      val total: List[Cost] = List(callCost) ++ listOfCosts(aq, listOfCalculatedCost)
-      total
-    }
-    case Nil => listOfCalculatedCost
-  }
-
-  def calculateCost(listOfCallDuration: Call): Cost = {
-    val durationInLong: Long = Duration.between(LocalTime.MIN, LocalTime.parse(listOfCallDuration.callDuration.value)).getSeconds
-    val cost = if (durationInLong >= 180) Cost(0.05 * durationInLong) else Cost(0.03 * durationInLong)
-    cost
+  def promotionApplied(list: List[Call]): Map[CustomersId, Cost]= {
+    val teestA: Map[CustomersId, Map[PhoneNumberCalled, List[String]]] = list.groupBy(_.customersId).splitAt(0).map(_.map { case (key, value) => key -> value.groupBy(_.phoneNumberCalled).map { case (key, value) => key -> value.map(_.callDuration.value) } })._2
+    val filtered: Map[CustomersId, Map[PhoneNumberCalled, Long]] = allCalls(teestA)
+    println(filtered)
+    calculateCostNew(filtered)
 
   }
 
-  def calculateTotalCost(customerGroupedByCosts: Map[CustomersId, List[Cost]]): List[(CustomersId, Cost)] = {
-    val customerGroupedByTotalCost: List[(CustomersId, Cost)] = customerGroupedByCosts.toList.map {
-      case (key, value) => key -> Cost(Math.round(value.map(_.value).sum / 0.01) * 0.01)
-    }
-    customerGroupedByTotalCost
+  // new
+  def allCalls(oldCalls: Map[CustomersId, Map[PhoneNumberCalled, List[String]]]) = {
+    val sumed = oldCalls map { case (key, value) => key -> sumTheDuration(value) }
+    sumed.map { case (key, value) => key -> filterTheDuration(value) }
   }
 
-  def joinCustomerWithTotalCost(filteredCalls: List[Call], listOfCallCostPerCustomer: List[Cost]): List[(CustomersId, Cost)] = {
-    val customerIdJoinedWithCost = filteredCalls.map(_.customersId) zip listOfCallCostPerCustomer
-    val customerGroupedByCosts: Map[CustomersId, List[Cost]] = customerIdJoinedWithCost.groupBy(_._1).map {
-      case (key, value) => key -> value.map(value => Cost(value._2.value))
-    }
-    calculateTotalCost(customerGroupedByCosts)
+  // new
+  def sumTheDuration(call: Map[PhoneNumberCalled, List[String]]) = {
+    call.map { case (key, value) => key -> value.map(value => Duration.between(LocalTime.MIN, LocalTime.parse(value)).getSeconds).sum }
   }
 
-  def toTalk(listOfCustomerWithCost: List[(CustomersId, Cost)], talks: List[Talk] = List()): List[Talk] = listOfCustomerWithCost match {
-    case a :: aq => {
-      val talk: Talk = Talk(s"${a._1} has a bill of £${a._2.value}")
-      val result = toTalk(aq, List(talk) ++ talks)
-      result
-    }
-    case Nil => talks
+  // new
+  def filterTheDuration(value: Map[PhoneNumberCalled, Long]) = {
+    val values = value.map { case (_, value) => value }.max
+    value.filter(_._2 != values)
+  }
+
+  // new
+  def calculateCostNew(bla: Map[CustomersId, Map[PhoneNumberCalled, Long]]) = {
+    val durationInLong = bla.map { case (key, value) => key -> value.map(_._2) }
+    val cost = durationInLong.map { case (key, value) => key -> value.map {
+      value => if (value >= 180) Cost(0.05 * value) else Cost(0.03 * value)}}
+    val total = cost.map { case (key, value) => key -> Cost(Math.round(value.map(value => value.value).sum / 0.01) * 0.01) }
+    total
+  }
+
+  // new
+  def heeey(value: Either[Error, Map[CustomersId, Cost]]): List[String] = value match {
+    case Right(bla) => { bla.map {case (key, value) =>
+        Talk(s"Customer ${key.value} has a bill of £${value.value}")
+      }.map(_.value).toList
+     }
   }
 
   dataProcess("calls.log")
