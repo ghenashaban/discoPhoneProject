@@ -20,8 +20,8 @@ object DataProcess extends App {
 
   def printOutput(parseCalls: Either[Error, List[Call]]) = parseCalls match {
     case Right(_) =>
-      val talkee = heeey(bla(parseCalls))
-      for (element <- talkee) {
+      val elements = toString(promotionApplied(parseCalls))
+      for (element <- elements) {
         println(element)
       }
     case Left(_) => println("something went wrong")
@@ -36,52 +36,56 @@ object DataProcess extends App {
     }
   }
 
-  def bla(callLogsList: Either[Error, List[Call]]): Either[Error, Map[CustomersId, Cost]] = {
-    callLogsList match {
-      case Right(calls) => Right(promotionApplied(calls))
+  // create a function than does the mapping and pass only RIGHT
+
+  def customerIdMapped = ???
+
+  def promotionApplied(list: Either[Error, List[Call]]): Map[CustomersId, Cost] = list match {
+    case Right(call) => {
+      val customerIdMappedByCalls = call.groupBy(_.customersId).splitAt(0).map(_.map {
+        case (key, value) => key -> value.groupBy(_.phoneNumberCalled).map {
+          case (key, value) => key -> value.map(_.callDuration.value)
+        } })._2
+      val filteredCalls = getFilteredCalls(customerIdMappedByCalls)
+      calculateCost(filteredCalls)
     }
   }
 
-  def promotionApplied(list: List[Call]): Map[CustomersId, Cost]= {
-    val teestA: Map[CustomersId, Map[PhoneNumberCalled, List[String]]] = list.groupBy(_.customersId).splitAt(0).map(_.map { case (key, value) => key -> value.groupBy(_.phoneNumberCalled).map { case (key, value) => key -> value.map(_.callDuration.value) } })._2
-    val filtered: Map[CustomersId, Map[PhoneNumberCalled, Long]] = allCalls(teestA)
-    println(filtered)
-    calculateCostNew(filtered)
-
+  def getFilteredCalls(calls: Map[CustomersId, Map[PhoneNumberCalled, List[String]]]): Map[CustomersId, Map[PhoneNumberCalled, Long]] = {
+    val totalDurationPerPhoneNumberCalled = calls map {
+      case (key, value) => key -> CalculateTotalDurationPerPhoneNumberCalled(value) }
+    totalDurationPerPhoneNumberCalled.map { case (key, value) => key -> filterDuration(value) }
   }
 
-  // new
-  def allCalls(oldCalls: Map[CustomersId, Map[PhoneNumberCalled, List[String]]]) = {
-    val sumed = oldCalls map { case (key, value) => key -> sumTheDuration(value) }
-    sumed.map { case (key, value) => key -> filterTheDuration(value) }
+  private def CalculateTotalDurationPerPhoneNumberCalled(call: Map[PhoneNumberCalled, List[String]]): Map[PhoneNumberCalled, Long] = {
+    call.map {
+      case (key, value) => key -> value.map(value => Duration.between(LocalTime.MIN, LocalTime.parse(value)).getSeconds).sum
+    }
   }
 
-  // new
-  def sumTheDuration(call: Map[PhoneNumberCalled, List[String]]) = {
-    call.map { case (key, value) => key -> value.map(value => Duration.between(LocalTime.MIN, LocalTime.parse(value)).getSeconds).sum }
-  }
 
-  // new
-  def filterTheDuration(value: Map[PhoneNumberCalled, Long]) = {
+  private def filterDuration(value: Map[PhoneNumberCalled, Long]): Map[PhoneNumberCalled, Long] = {
     val values = value.map { case (_, value) => value }.max
     value.filter(_._2 != values)
   }
 
-  // new
-  def calculateCostNew(bla: Map[CustomersId, Map[PhoneNumberCalled, Long]]) = {
-    val durationInLong = bla.map { case (key, value) => key -> value.map(_._2) }
-    val cost = durationInLong.map { case (key, value) => key -> value.map {
-      value => if (value >= 180) Cost(0.05 * value) else Cost(0.03 * value)}}
-    val total = cost.map { case (key, value) => key -> Cost(Math.round(value.map(value => value.value).sum / 0.01) * 0.01) }
+  def calculateCost(filteredCalls: Map[CustomersId, Map[PhoneNumberCalled, Long]]): Map[CustomersId, Cost] = {
+    val getDuration = filteredCalls.map { case (key, value) => key -> value.values }
+    val cost = getDuration.map {
+      case (key, value) => key -> value.map {
+      value => if (value >= 180) Cost(0.05 * value) else Cost(0.03 * value)
+    }
+    }
+    val total = cost.map {
+      case (key, value) => key -> Cost(Math.round(value.map(value => value.value).sum / 0.01) * 0.01)
+    }
     total
   }
 
-  // new
-  def heeey(value: Either[Error, Map[CustomersId, Cost]]): List[String] = value match {
-    case Right(bla) => { bla.map {case (key, value) =>
-        Talk(s"Customer ${key.value} has a bill of £${value.value}")
-      }.map(_.value).toList
-     }
+  def toString(value: Map[CustomersId, Cost]): List[String] = {
+    value.map { case (key, value) =>
+      Talk(s"Customer ${key.value} has a bill of £${value.value}")
+    }.map(_.value).toList
   }
 
   dataProcess("calls.log")
