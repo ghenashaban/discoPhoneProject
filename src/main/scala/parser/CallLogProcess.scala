@@ -4,10 +4,10 @@ import model._
 
 object CallLogProcess {
 
-  def parseCall(string: String): Either[Error, Call] = string match {
+  def parseCall(callLog: String): Either[Error, Call] = callLog match {
       case value if value.isEmpty => Left(Error("File is empty"))
       case _ => {
-        val splitCallLog: List[String] = string.split (" ").map (_.trim).toList
+        val splitCallLog: List[String] = callLog.split (" ").map (_.trim).toList
         splitCallLog match {
         case a :: b :: c :: Nil if a.nonEmpty && b.nonEmpty && c.nonEmpty =>
         Right (Call (CustomersId (a), PhoneNumberCalled (b), CallDuration (c) ) )
