@@ -25,20 +25,6 @@ class ServiceSpec extends AnyFlatSpec {
     assertResult(expectedResult)(actualResult)
   }
 
-  "Given a list of CallWithCost" should "return CallWithCost mapped by customerId" in {
-    val listOfCallCost: List[CallWithCost] = List(CallWithCost(customerACall1, Cost(6.15)), CallWithCost(customerBCall1, Cost(4.0)),
-      CallWithCost(customerACall2, Cost(14.49)), CallWithCost(customerBCall2, Cost(6.75)))
-    val actualResult = groupCustomerWithCalls(listOfCallCost)
-    val expectedResult = Map(
-      CustomersId("B") ->
-        List(CallWithCost(Call(CustomersId("B"), PhoneNumberCalled("555-333-212"), CallDuration("00:01:20")), Cost(4.0)),
-             CallWithCost(Call(CustomersId("B"), PhoneNumberCalled("555-333-212"), CallDuration("00:02:15")), Cost(6.75))),
-      CustomersId("A") ->
-        List(CallWithCost(Call(CustomersId("A"), PhoneNumberCalled("555-333-212"), CallDuration("00:02:03")), Cost(6.15)),
-             CallWithCost(Call(CustomersId("A"), PhoneNumberCalled("555-433-242"), CallDuration("00:06:03")), Cost(14.49))))
-    assertResult(expectedResult)(actualResult)
-  }
-
   "Given a customerId with a list of costs" should "return customerId with total bill ignoring filtering" in {
     val input = Map(CustomersId("A") -> List(Cost(6.15), Cost(14.49)), CustomersId("B") -> List(Cost(4.0), Cost(6.75)))
     val actualResult = getTotalCost(input)

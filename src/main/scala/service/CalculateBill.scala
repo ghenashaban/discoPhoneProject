@@ -1,7 +1,8 @@
 package service
 
 import config.config._
-import model.{Call, CallDuration, CallWithCost, Cost, CustomersId}
+import model.{Call, CallWithCost, Cost, CustomersId}
+
 import java.time.{Duration, LocalTime}
 
 object CalculateBill {
@@ -9,26 +10,21 @@ object CalculateBill {
   val promotion = new ApplyPromotion
 
   def getCustomersTotalBill(parseCalls: List[Call], promotionApplied: Boolean = false): Map[CustomersId, Cost] = {
-    val logsGroupedByCustomerId = groupCustomerWithCalls(parseCalls.map(calculateCallCost))
 
-    if (promotionApplied) {
-      val filteredCallsByPromotion = logsGroupedByCustomerId.map {
-        case (key, value) => key -> promotion.applyPromotion(value)
-      }
-      getTotalCost(filteredCallsByPromotion)
+    val logsGroupedByCustomerId = parseCalls.map(calculateCallCost).groupBy(_.call.customersId)
+
+    val customerWithListOfCosts = if (promotionApplied) {
+      logsGroupedByCustomerId.view.mapValues(promotion.applyPromotion).toMap
     } else {
-      val customerWithListOfCosts = logsGroupedByCustomerId.map {
-        case (key, value) => key -> value.map(_.cost)
-      }
-      getTotalCost(customerWithListOfCosts)
+      logsGroupedByCustomerId.view.mapValues(_.map(_.cost)).toMap
     }
+    getTotalCost(customerWithListOfCosts)
   }
 
   // was private but removed for testing
-   def calculateCallCost(call: Call): CallWithCost = {
-     val durationInSeconds: Long = Duration.between(LocalTime.MIN, LocalTime.parse(call.callDuration.value)).getSeconds
-     val callInSeconds = call.copy(call.customersId, call.phoneNumberCalled, CallDuration(durationInSeconds.toString))
-    lazy val callDuration = callInSeconds.callDuration.value.toDouble
+  def calculateCallCost(call: Call): CallWithCost = {
+    val durationInSeconds: Long = Duration.between(LocalTime.MIN, LocalTime.parse(call.callDuration.value)).getSeconds
+    lazy val callDuration = durationInSeconds.toDouble
     val cost: Cost =
       if (callDuration >= threeMinutesInSeconds) {
         Cost((callDuration - threeMinutesInSeconds) * callsOver3minCost +
@@ -39,14 +35,7 @@ object CalculateBill {
     CallWithCost(call, cost)
   }
 
-  // was private but removed for testing
-   def groupCustomerWithCalls(callsWithCost: List[CallWithCost]): Map[CustomersId, List[CallWithCost]] = {
-    callsWithCost.groupBy(_.call.customersId)
-  }
-
   def getTotalCost(customerIdWithCosts: Map[CustomersId, List[Cost]]): Map[CustomersId, Cost] = {
-    customerIdWithCosts.map {
-      case (key, value) => key -> Cost("%.2f".format(value.map(_.value).sum).toDouble)
-    }
+    customerIdWithCosts.view.mapValues(value => Cost("%.2f".format(value.map(_.value).sum).toDouble)).toMap
   }
 }
