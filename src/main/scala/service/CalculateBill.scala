@@ -26,8 +26,8 @@ object CalculateBill {
 
   // was private but removed for testing
    def calculateCallCost(call: Call): CallWithCost = {
-     val callDurationInSeconds: Long = Duration.between(LocalTime.MIN, LocalTime.parse(call.callDuration.value)).getSeconds
-     val callInSeconds = call.copy(call.customersId, call.phoneNumberCalled, CallDuration(callDurationInSeconds.toString))
+     val durationInSeconds: Long = Duration.between(LocalTime.MIN, LocalTime.parse(call.callDuration.value)).getSeconds
+     val callInSeconds = call.copy(call.customersId, call.phoneNumberCalled, CallDuration(durationInSeconds.toString))
     lazy val callDuration = callInSeconds.callDuration.value.toDouble
     val cost: Cost =
       if (callDuration >= threeMinutesInSeconds) {
@@ -40,8 +40,8 @@ object CalculateBill {
   }
 
   // was private but removed for testing
-   def groupCustomerWithCalls(list: List[CallWithCost]): Map[CustomersId, List[CallWithCost]] = {
-    list.groupBy(_.call.customersId)
+   def groupCustomerWithCalls(callsWithCost: List[CallWithCost]): Map[CustomersId, List[CallWithCost]] = {
+    callsWithCost.groupBy(_.call.customersId)
   }
 
   def getTotalCost(customerIdWithCosts: Map[CustomersId, List[Cost]]): Map[CustomersId, Cost] = {
